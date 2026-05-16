@@ -571,9 +571,8 @@ function OrionLib:MakeNotification(NotificationConfig)
 
 		if not NotificationFrame then return end
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-
 		wait(NotificationConfig.Time - 0.88)
-		if not NotificationFrame or not NotificationFrame:FindFirstChild("Frame") then return end
+		if not NotificationFrame or not NotificationFrame:FindFirstChild("Icon") then return end
 		TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 0.6}):Play()
 		wait(0.3)
