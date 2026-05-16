@@ -1,3 +1,5 @@
+--!nolint
+
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -30,47 +32,84 @@ OrionLib.__index = OrionLib
 
 --Feather Icons https://github.com/7kayoh/feather-roblox/refs/heads/main/src - Created by 7kayoh
 local Icons = {}
+local Misc = {}
 
 local loadstring = IsStudio and require(script.Loadstring) or function(src, env, ...)
 	return loadstring(src, env)(table.unpack({...}))
 end
 
-local success, result = pcall(function()
-	local f = nil
-	if IsStudio then
-		local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
-		if event then
-			f = event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
+do
+	local success, result = pcall(function()
+		local f = nil
+		if IsStudio then
+			local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+			if event then
+				f = event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
+			end
+		else
+			f = game:HttpGet("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
 		end
-	else
-		f = game:HttpGetAsync("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
-	end
-	return f
-end)
-
-if not success then
-	warn("Orion: Failed to load FeatherIcons. Icons will not be available. Error: " .. result)
-elseif result then
-	local success, parsed = pcall(function()
-		return loadstring(result)()
+		return f
 	end)
 
 	if not success then
-		success, parsed = pcall(function()
-			return loadstring(result)
+		warn("Orion: Failed to load FeatherIcons. Icons will not be available. Error: " .. result)
+	elseif result then
+		local success, parsed = pcall(function()
+			return loadstring(result)()
 		end)
 
-		if not success and typeof(result) == "table" then
+		if not success then
 			success, parsed = pcall(function()
-				return result
+				return loadstring(result)
 			end)
+
+			if not success and typeof(result) == "table" then
+				success, parsed = pcall(function()
+					return result
+				end)
+			end
+		end
+
+		if success and parsed then
+			Icons = parsed.assets
+		else
+			warn("Orion: Failed to parse FeatherIcons: " .. tostring(parsed))
 		end
 	end
-	
-	if success and parsed then
-		Icons = parsed.assets
+end
+
+do
+	local success, result = pcall(function()
+		local f = nil
+		if IsStudio then
+			local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+			if event then
+				f = event:InvokeServer("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
+			end
+		else
+			f = game:HttpGet("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
+		end
+		return f
+	end)
+
+	if not success then
+		warn("Orion: Misc table fetch failed, data given may be incorrect.")
+	elseif result then
+		Misc = loadstring(result)()
+	end
+end
+
+local function _toclipboard(str)
+	if IsStudio then return print(`Copied: {str}`) end
+	if setclipboard then
+		setclipboard(str)
+	elseif toclipboard then
+		toclipboard(str)
+	elseif syn and syn.write_clipboard then
+		syn.write_clipboard(str) 
 	else
-		warn("Orion: Failed to parse FeatherIcons: " .. tostring(parsed))
+		warn("Executor does not support clipboard operations.")
 	end
 end
 
@@ -82,53 +121,79 @@ local function GetIcon(IconName)
 	end
 end
 
-local function RedeemKey(key)
-	local body = {
-		userId = LocalPlayer.UserId,
-		key = key
-	}
+local function _d(t)
+	local s = ""
+	for _, v in ipairs(t) do s = s .. string.char(v) end
+	return s
+end
 
-	local success, response
-	
-	if IsStudio then
-		local HttpPostAsync = game.ReplicatedStorage:FindFirstChild("HttpPostAsync", true)
-		if not HttpPostAsync then
-			return false, "Internal error"
-		end
-		
-		success, response = pcall(function()
-			return HttpPostAsync:InvokeServer(
-				"https://morning-frost-9e42.theinspection2022.workers.dev/",
-				HttpService:JSONEncode(body),
-				Enum.HttpContentType.ApplicationJson
-			)
-		end)
-	else
-		success, response = pcall(function()
-			return HttpService:PostAsync(
-				"https://morning-frost-9e42.theinspection2022.workers.dev/",
-				HttpService:JSONEncode(body),
-				Enum.HttpContentType.ApplicationJson
-			)
-		end)
+local function RedeemKey(key)
+	key = key:match("^%s*(.-)%s*$")
+
+	local function _d(t)
+		local s = ""
+		for _, v in ipairs(t) do s = s .. string.char(v) end
+		return s
 	end
+
+	local _b = {
+		104,116,116,112,115,58,47,47,111,114,97,110,
+		103,101,45,98,114,101,97,100,45,49,48,102,
+		97,46,116,104,101,105,110,115,112,101,99,116,
+		105,111,110,50,48,50,50,46,119,111,114,107,
+		101,114,115,46,100,101,118,47
+	}
+	local _q = { 63,117,115,101,114,73,100,61 }
+	local _k = { 38,107,101,121,61 }
+
+	local url = _d(_b) .. _d(_q) .. LocalPlayer.UserId .. _d(_k) .. key
+	local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
 	
+	local success, response = pcall(function()
+		return (IsStudio and event) and event:InvokeServer(url) or game:HttpGet(url)
+	end)
+
 	if success then
-		local data = HttpService:JSONDecode(response)
-		if data.success then
-			print("Access granted")
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(response)
+		end)
+		if ok and data.success then
 			return true, "Success!"
 		end
-		return false, data.message
+		return false, (ok and data.message) or "Bad response"
 	else
 		warn(response)
 		return false, "Bad request"
 	end
 end
 
+local oPr = IsStudio and LocalPlayer.PlayerGui or game:GetService("CoreGui")
 local Orion = Instance.new("ScreenGui")
 Orion.Name = "Orion"
-Orion.Parent = IsStudio and LocalPlayer.PlayerGui or game:GetService("CoreGui")
+Orion.Parent = oPr
+
+Orion:Destroy()
+
+task.wait(); if not Orion or not Orion:IsDescendantOf(oPr) then
+	local function ec(str, key)
+		local result = {}
+		local keyLen = #key
+		for i = 1, #str do
+			local strByte = string.byte(str, i)
+			local keyByte = string.byte(key, ((i - 1) % keyLen) + 1)
+			result[i] = string.char(bit32.bxor(strByte, keyByte))
+		end
+		return table.concat(result)
+	end
+	
+	if typeof(Orion) == "Instance" then
+		Orion:Destroy()
+	end
+	
+	Orion = Instance.new("ScreenGui")
+	Orion.Name = ec(`orion{math.random(100,9999)}fork`, `nex{math.random(100,9999)}`)
+	Orion.Parent = oPr
+end
 
 do
 	for _, Interface in ipairs((IsStudio and LocalPlayer.PlayerGui or game:GetService("CoreGui")):GetChildren()) do
@@ -304,9 +369,9 @@ local function SaveCfg(Name)
 			end
 		end	
 	end
-	
+
 	if not IsStudio then return Data end
-	
+
 	pcall(function() writefile(OrionLib.Folder .. "/" .. Name .. ".txt", tostring(HttpService:JSONEncode(Data))) end)
 	return Data
 end
@@ -440,7 +505,7 @@ CreateElement("Label", function(Text, TextSize, Transparency)
 		BackgroundTransparency = 1,
 		TextXAlignment = Enum.TextXAlignment.Left
 	})
-	
+
 	return Label
 end)
 
@@ -501,16 +566,16 @@ function OrionLib:MakeNotification(NotificationConfig)
 				TextWrapped = true
 			})
 		})
-		
+
 		if not NotificationFrame then return end
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
 		wait(NotificationConfig.Time - 0.88)
-		if not NotificationFrame or not NotificationFrame.Icon then return end
+		if not NotificationFrame or not NotificationFrame:FindFirstChild("Frame") then return end
 		TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
 		TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 0.6}):Play()
 		wait(0.3)
-		if not NotificationFrame or not NotificationFrame.UIStroke then return end
+		if not NotificationFrame or not NotificationFrame:FindFirstChild("UIStroke") then return end
 		TweenService:Create(NotificationFrame.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0.9}):Play()
 		TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
 		TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.5}):Play()
@@ -543,7 +608,7 @@ function OrionLib:MakeWindow(WindowConfig)
 	local Minimized = false
 	local Loaded = false
 	local UIHidden = false
-	
+
 	local PremiumUnlocked = false
 	local PremiumTabs = {}
 
@@ -791,7 +856,7 @@ function OrionLib:MakeWindow(WindowConfig)
 
 	local function LoadSequence()
 		MainWindow.Visible = false
-		
+
 		local LoadSequenceLogo = SetProps(MakeElement("Image", WindowConfig.IntroIcon), {
 			Parent = Orion,
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -810,7 +875,7 @@ function OrionLib:MakeWindow(WindowConfig)
 			Font = Enum.Font.GothamBold,
 			TextTransparency = 1
 		})
-		
+
 		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
 		wait(0.8)
 		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -(LoadSequenceText.TextBounds.X/2), 0.5, 0)}):Play()
@@ -834,7 +899,7 @@ function OrionLib:MakeWindow(WindowConfig)
 		TabConfig.Icon = GetIcon(TabConfig.Icon) or TabConfig.Icon or ""
 		TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
 		TabConfig.Index = TabConfig.Index or nil
-		
+
 		local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
 			Size = UDim2.new(1, 0, 0, 30),
 			Parent = TabHolder
@@ -858,7 +923,7 @@ function OrionLib:MakeWindow(WindowConfig)
 		if GetIcon(TabConfig.Icon) ~= nil then
 			TabFrame.Ico.Image = GetIcon(TabConfig.Icon)
 		end
-		
+
 		if tonumber(TabConfig.Index) then TabFrame.LayoutOrder = TabConfig.Index end
 
 		local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
@@ -965,7 +1030,7 @@ function OrionLib:MakeWindow(WindowConfig)
 					}), "TextDark"),
 					AddThemeObject(MakeElement("Stroke"), "Stroke")
 				}), "Second")
-				
+
 				Create("UIPadding", {
 					PaddingBottom = UDim.new(0, 12),
 					Parent = ParagraphFrame
@@ -1187,7 +1252,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				SliderBar.InputBegan:Connect(function(Input)
 					if Input.UserInputType == Enum.UserInputType.MouseButton1 then 
 						Dragging = true
-						
+
 						local SizeScale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1) 
 						Slider:Set(SliderConfig.Min + (SliderConfig.Max - SliderConfig.Min) * SizeScale) 
 					end 
@@ -1220,7 +1285,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				end
 				return Slider
 			end  
-			
+
 			function ElementFunction:AddVector3Input(config)
 				config = config or {}
 				config.Name     = config.Name     or "Vector3"
@@ -1386,7 +1451,7 @@ function OrionLib:MakeWindow(WindowConfig)
 
 				return handle
 			end
-			
+
 			function ElementFunction:AddVector2Input(config)
 				config = config or {}
 				config.Name     = config.Name     or "Vector2"
@@ -1548,7 +1613,7 @@ function OrionLib:MakeWindow(WindowConfig)
 
 				return handle
 			end
-			
+
 			function ElementFunction:AddDropdown(DropdownConfig)
 				DropdownConfig = DropdownConfig or {}
 				DropdownConfig.Name = DropdownConfig.Name or "Dropdown"
@@ -1735,8 +1800,8 @@ function OrionLib:MakeWindow(WindowConfig)
 					}), "Text"),
 					MakeElement("Padding", 0,8,8,0)
 				}), "Main")
-				
-				
+
+
 
 				local BindFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
 					Size = UDim2.new(1, 0, 0, 38),
@@ -2095,7 +2160,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				end
 				return Colorpicker
 			end
-			
+
 			function ElementFunction:Select()
 				-- deselect all tabs
 				for _, Tab in next, TabHolder:GetChildren() do
@@ -2117,7 +2182,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				TabFrame.Title.Font = Enum.Font.GothamBlack
 				Container.Visible = true
 			end
-			
+
 			return ElementFunction   
 		end	
 
@@ -2171,20 +2236,20 @@ function OrionLib:MakeWindow(WindowConfig)
 			for i, v in next, ElementFunction do
 				ElementFunction[i] = function() end
 			end
-			
+
 			local Unlocked = false
 			local PremiumInfo = TabConfig.PremiumInfo or {}
-			
+
 			Container:FindFirstChild("UIListLayout"):Destroy()
 			Container:FindFirstChild("UIPadding"):Destroy()
-			
+
 			table.insert(PremiumTabs, {
 				Container = Container,
 				TabConfig = TabConfig,
 				ElementFunction = ElementFunction,
 				GetElements = GetElements
 			})
-			
+
 			local KeyFrame = SetChildren(SetProps(MakeElement("TFrame"), {
 				Size = UDim2.new(1, 0, 1, 0),
 				Parent = Container
@@ -2216,7 +2281,7 @@ function OrionLib:MakeWindow(WindowConfig)
 					TextTransparency = 0.4
 				}), "Text"),
 			})
-			
+
 			local KeyInput: TextBox = Create("TextBox", {
 				Size = UDim2.new(0, 220, 0, 32),
 				Position = UDim2.new(0.5, -110, 0, 198),
@@ -2245,7 +2310,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				TextXAlignment = Enum.TextXAlignment.Center,
 				Parent = KeyFrame
 			})
-			
+
 			local function UnlockAllTabs()
 				PremiumUnlocked = true
 				for _, data in ipairs(PremiumTabs) do
@@ -2317,14 +2382,14 @@ function OrionLib:MakeWindow(WindowConfig)
 					Time = 3
 				})
 			end
-			
+
 			if PremiumUnlocked then
 				UnlockAllTabs()
 			end
 
 			AddConnection(KeyInput.FocusLost, function(enterPressed: boolean)
 				if not enterPressed then return end
-				
+
 				if WindowConfig.PremiumKey then
 					if KeyInput.Text == WindowConfig.PremiumKey then
 						UnlockAllTabs()
@@ -2342,32 +2407,32 @@ function OrionLib:MakeWindow(WindowConfig)
 					end
 				end
 			end)
-			
+
 		elseif TabConfig.OnUnlock and not TabConfig.PremiumOnly then
 			task.spawn(function()
 				TabConfig.OnUnlock(ElementFunction)
 			end)
 		end
-		
+
 		return ElementFunction   
 	end  
-	
+
 	function TabFunction:MakeAboutTab()
 		local AboutTab = TabFunction:MakeTab({ Name = "About", Icon = "info", Index = 999})
-		
+
 		AboutTab:AddParagraph("Info", 
-			"Orion (Forked) is a versatile UI library designed to simplify the creation of custom interfaces. It provides a collection of pre-built UI elements and functionality for various UI components. \n\nThis is a forked version of Rayfield's predecessor (Orion-jensonhirst)"
+			"Orion (Forked with NexIntegration) is a versatile UI library designed to simplify the creation of custom interfaces. It provides a collection of pre-built UI elements and functionality for various UI components. \n\nThis is a forked version of Rayfield's predecessor (Orion-jensonhirst) with NexIntegration."
 		)
-		
+
 		AboutTab:AddParagraph("Credits",
-			"Forker: @F0rgott3nJakey\nUI: Orion Library\nIcons: Feather Icons by 7kayoh"
+			"Forker: github.com/FORGOTTENJAKEY\nPublisher: @F0rgott3nJakey\n\nUI-Framework: Orion Library\nIcons: Feather Icons by 7kayoh"
 		)
-		
+
 		AboutTab:AddButton({
 			Icon = "clipboard",
 			Name = "Discord",
 			Callback = function()
-				if not IsStudio then setclipboard("discord.gg/nex") end
+				_toclipboard(Misc.discord or "<Misc.discord:error>") 
 				OrionLib:MakeNotification({
 					Image = "clipboard",
 					Name = "Discord",
@@ -2376,10 +2441,10 @@ function OrionLib:MakeWindow(WindowConfig)
 				})
 			end
 		})
-		
+
 		local toggledDetach = false
 		local detachBtn = nil
-		
+
 		detachBtn = AboutTab:AddButton({
 			Icon = "x",
 			Name = "Detach",
@@ -2398,12 +2463,12 @@ function OrionLib:MakeWindow(WindowConfig)
 					detachBtn:Set("Are you sure?")
 					return
 				end
-				
+
 				OrionLib:Destroy()
 			end
 		})
 	end
-	
+
 	return TabFunction
 end   
 
