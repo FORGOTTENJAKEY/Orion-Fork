@@ -51,7 +51,9 @@ end)
 if not success then
 	warn("Orion: Failed to load FeatherIcons. Icons will not be available. Error: " .. result)
 elseif result then
-	local success, parsed = pcall(loadstring(result))
+	local success, parsed = pcall(function()
+		return loadstring(result)()
+	end)
 	if success and parsed then
 		Icons = parsed.assets
 	else
