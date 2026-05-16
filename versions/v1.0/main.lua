@@ -1,3 +1,5 @@
+-->> This module has a NexIntegrated key system.
+
 --!nolint
 
 local UserInputService = game:GetService("UserInputService")
@@ -934,7 +936,7 @@ function OrionLib:MakeWindow(WindowConfig)
 			Name = "ItemContainer"
 		}), {
 			MakeElement("List", 0, 6),
-			MakeElement("Padding", 15, 10, 10, 15)
+			MakeElement("Padding", 10, 10, 10, 10)
 		}), "Divider")
 
 		AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
