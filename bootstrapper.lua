@@ -7,30 +7,33 @@ local _b = {
     101,102,115,47,104,101,97,100,115,47,109,97,
     105,110,47,118,101,114,115,105,111,110,115,47,
     118,37,115,47,109,97,105,110,46,108,117,97
-}; local lat = "1.0"
+}
+
+local lat = "1.0"
 
 return function(v)
     v = v or lat
     local s, r = pcall(function()
-        local l = ""
-        for _, bt in ipairs(_b) do l ..= string.char(bt) end
+        local url = ""
+        for _, byte in ipairs(_b) do url = url .. string.char(byte) end
 
-        local function ft(ver)
-            local fi = l:format(ver)
+        local function fetch(ver)
+            local fi = url:format(ver)
             local ok, res = pcall(function()
                 return loadstring(game:HttpGet(fi))()
             end)
             return ok, res
         end
 
-        local s2, res = ft(v)
-        if not s2 and v ~= lat then
-            warn(`[OrionFork: Bootstrapper]: v{v} not found, falling back to v{lat}`)
-            s2, res = ft(lat)
+        local ok, res = fetch(v)
+
+        if not ok and v ~= lat then
+            warn("[OrionFork: Bootstrapper]: v" .. v .. " not found, falling back to v" .. lat)
+            ok, res = fetch(lat)
         end
 
-        if not s2 then
-            warn(`[OrionFork: Bootstrapper]: Failed to fetch. Please retry.`)
+        if not ok then
+            warn("[OrionFork: Bootstrapper]: Failed to fetch. Please retry.")
             return nil
         end
 
@@ -38,7 +41,7 @@ return function(v)
     end)
 
     if not s then
-        warn(`[OrionFork: Bootstrapper]: Internal error. ({r})`)
+        warn("[OrionFork: Bootstrapper]: Internal error. (" .. tostring(r) .. ")")
         return nil
     end
 
