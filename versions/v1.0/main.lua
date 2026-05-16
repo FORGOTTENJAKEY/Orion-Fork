@@ -43,7 +43,7 @@ local success, result = pcall(function()
 			f=event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
 		end
 	else
-		f=game:HttpGetAsync("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua") 
+		f=game:HttpGetAsync("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")()
 	end
 	return f
 end)
