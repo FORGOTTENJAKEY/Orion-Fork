@@ -270,6 +270,35 @@ function OrionThemes:Tween(targetTheme, duration)
 	end)
 end
 
+function OrionThemes:LoadTheme(text, apply)
+	local lib = self._lib
+	assert(lib, "OrionThemes: call :Init(OrionLib) first")
+
+	local body = text:match("{(.+)}")
+	if not body then
+		warn("OrionThemes:LoadTheme – no { } block found in text.")
+		return nil
+	end
+
+	local theme = {}
+	for _, key in ipairs(THEME_KEYS) do
+		local r, g, b = body:match(key .. "%s*=%s*Color3%.fromRGB%((%d+),%s*(%d+),%s*(%d+)%)")
+		if r then
+			theme[key] = Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
+		end
+	end
+
+	local ok, err = pcall(validateTheme, theme)
+	if not ok then
+		warn("OrionThemes:LoadTheme – " .. tostring(err))
+		return nil
+	end
+
+	local name = body:match('Name%s*=%s*"([^"]+)"') or "LoadedTheme"
+	self:Register(name, theme, apply)
+	return name
+end
+
 function OrionThemes:MakeThemeTab(Window, i)
 	local lib = self._lib
 	assert(lib,    "OrionThemes: call :Init(OrionLib) first")
@@ -298,7 +327,7 @@ function OrionThemes:MakeThemeTab(Window, i)
 	})
 
 	-- ── SECTION: Preset Themes ────────────────────────────────────────────────
-	Tab:AddSection({ Name = "Preset Themes" })
+	local section1 = Tab:AddSection({ Name = "Preset Themes" })
 
 	local function sortedNames()
 		local list = {}
@@ -309,7 +338,7 @@ function OrionThemes:MakeThemeTab(Window, i)
 		return list
 	end
 
-	Tab:AddDropdown({
+	section1:AddDropdown({
 		Name    = "Select Theme",
 		Default = self:Current(),
 		Options = sortedNames(),
@@ -337,11 +366,11 @@ function OrionThemes:MakeThemeTab(Window, i)
 	--})
 
 	-- ── SECTION: Custom Theme Builder ─────────────────────────────────────────
-	Tab:AddSection({ Name = "Custom Theme Builder" })
+	local section2 = Tab:AddSection({ Name = "Custom Theme Builder" })
 
 	for _, key in ipairs(THEME_KEYS) do
 		local k = key
-		Tab:AddColorpicker({
+		section2:AddColorpicker({
 			Name     = k,
 			Default  = customColors[k],
 			Flag     = "__OrionThemes_Custom_" .. k,
@@ -351,7 +380,7 @@ function OrionThemes:MakeThemeTab(Window, i)
 		})
 	end
 
-	Tab:AddTextbox({
+	section2:AddTextbox({
 		Name          = "Theme Name",
 		Default       = customName,
 		TextDisappear = false,
@@ -361,7 +390,7 @@ function OrionThemes:MakeThemeTab(Window, i)
 		end,
 	})
 
-	Tab:AddButton({
+	section2:AddButton({
 		Name = "Apply Custom Theme",
 		Callback = function()
 			-- validate
@@ -394,7 +423,66 @@ function OrionThemes:MakeThemeTab(Window, i)
 			})
 		end,
 	})
+	
+	-- ── SECTION: Load Theme from Text ────────────────────────────────────────────
+	local section3 = Tab:AddSection({ Name = "Load Theme" })
 
+	local pendingThemeText = ""
+	local textbox
+	local lasttext = ""
+	
+	local function onEnteredTextbox(text)
+		if not textbox then return end
+		text = text or textbox:Get()
+		pendingThemeText = text and text:match("^%s*(.-)%s*$") or ""
+
+		if not pendingThemeText or #pendingThemeText == 0 then
+			lib:MakeNotification({
+				Name    = "Load Theme",
+				Content = "Paste a theme code into the box first.",
+				Image   = "alert-circle",
+				Time    = 3,
+			})
+			return
+		end
+
+		local name = self:LoadTheme(pendingThemeText, true)
+
+		if name then
+			lib:MakeNotification({
+				Name    = "Theme Loaded",
+				Content = 'Loaded theme from code and applied.',
+				Image   = "check-circle",
+				Time    = 3,
+			})
+		else
+			lib:MakeNotification({
+				Name    = "Load Failed",
+				Content = "Invalid theme code. Make sure it has all 6 colour keys inside { }.",
+				Image   = "alert-circle",
+				Time    = 4,
+			})
+		end
+		
+		textbox:Set("")
+	end
+	
+	textbox = section3:AddTextbox({
+		Name          = "Paste Theme Code",
+		Default       = "",
+		TextDisappear = true,
+		Callback      = onEnteredTextbox,
+		OnTextChanged = function(text)
+			text = tostring(text)
+			task.wait()
+			if #text - #lasttext > 12 then -- detect likely paste
+				lasttext = text
+				textbox.Instance:ReleaseFocus()
+			end
+			lasttext = text
+		end
+	})
+	
 	-- ── SECTION: Utilities ────────────────────────────────────────────────────
 	Tab:AddSection({ Name = "Utilities" })
 
@@ -435,6 +523,7 @@ function OrionThemes:MakeThemeTab(Window, i)
 			if setclipboard then setclipboard(code)
 			elseif toclipboard then toclipboard(code)
 			elseif syn and syn.write_clipboard then syn.write_clipboard(code) end
+			print(code)
 			
 			lib:MakeNotification({
 				Name    = "Copied!",
