@@ -54,6 +54,19 @@ elseif result then
 	local success, parsed = pcall(function()
 		return loadstring(result)()
 	end)
+
+	if not success then
+		success, parsed = pcall(function()
+			return loadstring(result)
+		end)
+
+		if not success and typeof(result) == "table" then
+			success, parsed = pcall(function()
+				return result
+			end)
+		end
+	end
+	
 	if success and parsed then
 		Icons = parsed.assets
 	else
