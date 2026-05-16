@@ -270,7 +270,7 @@ function OrionThemes:Tween(targetTheme, duration)
 	end)
 end
 
-function OrionThemes:MakeThemeTab(Window)
+function OrionThemes:MakeThemeTab(Window, i)
 	local lib = self._lib
 	assert(lib,    "OrionThemes: call :Init(OrionLib) first")
 	assert(Window, "OrionThemes:MakeThemeTab() – Window is nil")
@@ -294,6 +294,7 @@ function OrionThemes:MakeThemeTab(Window)
 	local Tab = Window:MakeTab({
 		Name = "Themes",
 		Icon = "layers",
+		Index = i or 998
 	})
 
 	-- ── SECTION: Preset Themes ────────────────────────────────────────────────
@@ -439,7 +440,7 @@ function OrionThemes:MakeThemeTab(Window)
 				Name    = "Copied!",
 				Content = 'Theme code for "' .. curName .. '" is in your clipboard.',
 				Image   = "clipboard",
-				Time    = 2,
+				Time    = 3,
 			})
 		end,
 	})
