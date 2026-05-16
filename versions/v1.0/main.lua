@@ -2469,9 +2469,33 @@ function OrionLib:MakeWindow(WindowConfig)
 			end
 		})
 	end
-
+	
 	return TabFunction
-end   
+end
+
+function OrionLib:LoadPlugin(url)
+	local success, result = pcall(function()
+		local code = nil
+		if IsStudio then
+			local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+			code = event and event:InvokeServer(url)
+		else
+			code = game:HttpGet(url)
+		end
+		if not code then return nil end
+		local module = loadstring(code)()
+		if module and type(module.Init) == "function" then module:Init(self) end
+		return module
+	end)
+
+	if success and result then
+		return result
+	else
+		warn(`Orion: Failed to load plugin. ({result})`)
+	end
+
+	return nil
+end
 
 function OrionLib:Destroy()
 	if typeof(self.OnClose) == "function" then self.OnClose() self.OnClose = nil end
