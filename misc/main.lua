@@ -1,4 +1,3 @@
-local m = {
+table.freeze({
   discord = "discord.gg/JR9QVACx"
-}
-return m
+})
