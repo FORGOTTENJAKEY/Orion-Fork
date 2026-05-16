@@ -1,3 +1,3 @@
 return table.freeze({
-  discord = "discord.gg/JR9QVACx"
+  discord = "discord.gg/JR9QVACx",
 })
