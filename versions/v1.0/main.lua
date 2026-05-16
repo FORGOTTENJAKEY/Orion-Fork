@@ -1903,7 +1903,8 @@ function OrionLib:MakeWindow(WindowConfig)
 				TextboxConfig.Default = TextboxConfig.Default or ""
 				TextboxConfig.TextDisappear = TextboxConfig.TextDisappear or false
 				TextboxConfig.Callback = TextboxConfig.Callback or function() end
-
+				TextboxConfig.OnTextChanged = TextboxConfig.OnTextChanged or function() end
+				
 				local Click = SetProps(MakeElement("Button"), {
 					Size = UDim2.new(1, 0, 1, 0)
 				})
@@ -1948,6 +1949,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				AddConnection(TextboxActual:GetPropertyChangedSignal("Text"), function()
 					--TextContainer.Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)
 					TweenService:Create(TextContainer, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)}):Play()
+					TextboxConfig.OnTextChanged(TextboxActual.Text)
 				end)
 
 				AddConnection(TextboxActual.FocusLost, function()
@@ -1975,7 +1977,22 @@ function OrionLib:MakeWindow(WindowConfig)
 				AddConnection(Click.MouseButton1Down, function()
 					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(OrionLib.Themes[OrionLib.SelectedTheme].Second.R * 255 + 6, OrionLib.Themes[OrionLib.SelectedTheme].Second.G * 255 + 6, OrionLib.Themes[OrionLib.SelectedTheme].Second.B * 255 + 6)}):Play()
 				end)
+				
+				local TextBox = {
+					Instance = TextboxActual
+				}
+
+				function TextBox:Set(text)
+					TextboxActual.Text = tostring(text)
+				end
+
+				function TextBox:Get()
+					return TextboxActual.Text
+				end
+
+				return TextBox
 			end 
+			
 			function ElementFunction:AddColorpicker(ColorpickerConfig)
 				ColorpickerConfig = ColorpickerConfig or {}
 				ColorpickerConfig.Name = ColorpickerConfig.Name or "Colorpicker"
