@@ -36,14 +36,14 @@ local loadstring = IsStudio and require(script.Loadstring) or function(src, env,
 end
 
 local success, result = pcall(function()
-	local f=nil
+	local f = nil
 	if IsStudio then
 		local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
 		if event then
-			f=event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
+			f = event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
 		end
 	else
-		f=game:HttpGetAsync("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")()
+		f = game:HttpGetAsync("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
 	end
 	return f
 end)
