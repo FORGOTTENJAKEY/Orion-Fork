@@ -635,10 +635,10 @@ function OrionLib:MakeWindow(WindowConfig)
 	OrionLib.SaveCfg = WindowConfig.SaveConfig
 
 	pcall(function()
-		local fetchSuccess, fetchResult = pcall((game :: any).HttpGet, game, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/reporter.lua")
+		local fetchSuccess, fetchResult = pcall(game.HttpGet, game, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/reporter.lua")
 		if fetchSuccess and #fetchResult > 0 then
 			local execSuccess, Analytics = pcall(function()
-				return (loadstring(fetchResult) :: any)--()
+				return (loadstring(fetchResult))--()
 			end)
 			if execSuccess and Analytics then
 				local reporter = Analytics.new({
