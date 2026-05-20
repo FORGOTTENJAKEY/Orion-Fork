@@ -2302,7 +2302,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				}), "Text"),
 			})
 
-			local KeyInput: TextBox = Create("TextBox", {
+			local KeyInput = Create("TextBox", {
 				Size = UDim2.new(0, 220, 0, 32),
 				Position = UDim2.new(0.5, -110, 0, 198),
 				BackgroundColor3 = Color3.fromRGB(40, 40, 40),
