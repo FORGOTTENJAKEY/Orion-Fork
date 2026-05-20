@@ -103,7 +103,7 @@ do
 end
 
 local function _toclipboard(str)
-	if IsStudio then return print(`Copied: {str}`) end
+	if IsStudio then return print("Copied:".. str) end
 	if setclipboard then
 		setclipboard(str)
 	elseif toclipboard then
@@ -193,7 +193,9 @@ task.wait(); if not Orion or not Orion:IsDescendantOf(oPr) then
 	end
 	
 	Orion = Instance.new("ScreenGui")
-	Orion.Name = ec(`orion{math.random(100,9999)}fork`, `nex{math.random(100,9999)}`)
+	Orion.Name = ec(string.format("orion%dfork", math.random(100, 9999)),
+		string.format("nex%d", math.random(100, 9999)))
+	
 	Orion.Parent = oPr
 end
 
@@ -1100,7 +1102,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				end)
 
 				function Button:Set(ButtonText)
-					if not ButtonFrame or not ButtonFrame.Content then return end
+					if not ButtonFrame or not ButtonFrame:FindFirstChild("Content") then return end
 					ButtonFrame.Content.Text = ButtonText
 				end	
 
@@ -2508,7 +2510,7 @@ function OrionLib:LoadPlugin(url)
 	if success and result then
 		return result
 	else
-		warn(`Orion: Failed to load plugin. ({result})`)
+		warn("Orion: Failed to load plugin. ("..result..")")
 	end
 
 	return nil
