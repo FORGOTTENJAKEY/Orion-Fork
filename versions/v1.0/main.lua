@@ -98,7 +98,7 @@ do
 	if not success then
 		warn("Orion: Misc table fetch failed, data given may be incorrect.")
 	elseif result then
-		Misc = loadstring(result)()
+		Misc = loadstring(result)
 	end
 end
 
