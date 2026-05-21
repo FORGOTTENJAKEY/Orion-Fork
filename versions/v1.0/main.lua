@@ -58,7 +58,7 @@ do
 		warn("Orion: Failed to load FeatherIcons. Icons will not be available. Error: " .. result)
 	elseif result then
 		success, parsed = pcall(function()
-			return loadstring(result)
+			return loadstring(result)()
 		end)
 
 		if not success and typeof(result) == "table" then
@@ -2508,7 +2508,7 @@ function OrionLib:LoadPlugin(url)
 			code = game:HttpGet(url)
 		end
 		if not code then return nil end
-		local module = loadstring(code)
+		local module = loadstring(code)()
 		if module and type(module.Init) == "function" then module:Init(self) end
 		return module
 	end)
