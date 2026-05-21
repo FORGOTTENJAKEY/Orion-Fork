@@ -92,7 +92,7 @@ do
 	if not success then
 		warn("Orion: Misc table fetch failed, data given may be incorrect.")
 	elseif result then
-		Misc = loadstring(result)
+		Misc = loadstring(result)()
 	end
 end
 
@@ -590,10 +590,11 @@ function OrionLib:MakeNotification(NotificationConfig)
 		TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.5}):Play()
 		wait(0.05)
 		if not NotificationFrame then return end
-		NotificationFrame:TweenPosition(UDim2.new(1, 20, 0, 0),'In','Quint',0.8,true)
+		NotificationFrame:TweenPosition(UDim2.new(1, 40, 0, 0),'In','Quint',0.8,true)
 		wait(1.35)
 		if not NotificationFrame then return end
 		NotificationFrame:Destroy()
+		if NotificationParent then NotificationParent:Destroy() end
 	end)
 end    
 
@@ -2498,7 +2499,25 @@ function OrionLib:MakeWindow(WindowConfig)
 	return TabFunction
 end
 
+local plugindb = false
 function OrionLib:LoadPlugin(url)
+	spawn(function()
+		local trusted = Misc.trustedPublishers or {"github.com/FORGOTTENJAKEY"}
+		local isTrusted = false
+		for _, v in pairs(trusted) do if url:find(v) then isTrusted = true break end end
+		if not isTrusted and not plugindb then
+			plugindb = true
+			OrionLib:MakeNotification({
+				Image = "alert-circle",
+				Name = "Untrusted Plugin",
+				Content = "The plugin(s) that've just loaded are not by trusted links or publishers.",
+				Time = 4
+			})
+			
+			delay(2, function() plugindb = false end)
+		end
+	end)
+	
 	local success, result = pcall(function()
 		local code = nil
 		if IsStudio then
