@@ -176,7 +176,7 @@ Orion.Parent = oPr
 
 Orion:Destroy()
 
-task.wait(); if not Orion or not Orion:IsDescendantOf(oPr) then
+wait(); if not Orion or not Orion:IsDescendantOf(oPr) then
 	local function ec(str, key)
 		local result = {}
 		local keyLen = #key
@@ -211,6 +211,14 @@ function OrionLib:IsRunning()
 	return Orion.Parent == (IsStudio and LocalPlayer.PlayerGui or game:GetService("CoreGui"))
 end
 
+local function tableclear(tbl)
+	for i, _ in next, tbl do
+		tbl[i] = nil
+	end
+	
+	return tbl
+end
+
 local function AddConnection(Signal, Function)
 	if (not OrionLib:IsRunning()) then
 		return
@@ -220,7 +228,7 @@ local function AddConnection(Signal, Function)
 	return SignalConnect
 end
 
-task.spawn(function()
+spawn(function()
 	while (OrionLib:IsRunning()) do
 		wait()
 	end
@@ -296,8 +304,12 @@ local function SetChildren(Element, Children)
 	return Element
 end
 
+local function mathsign(Number)
+	return (Number > 0 and 1 or (Number < 0 and -1 or 0))
+end
+
 local function Round(Number, Factor)
-	local Result = math.floor(Number/Factor + (math.sign(Number) * 0.5)) * Factor
+	local Result = math.floor(Number/Factor + (mathsign(Number) * 0.5)) * Factor
 	if Result < 0 then Result = Result + Factor end
 	return Result
 end
@@ -1717,15 +1729,15 @@ function OrionLib:MakeWindow(WindowConfig)
 
 						Dropdown.Buttons[Option] = OptionBtn
 					end
-				end	
+				end
 
 				function Dropdown:Refresh(Options, Delete)
 					if Delete then
 						for _,v in pairs(Dropdown.Buttons) do
 							v:Destroy()
-						end    
-						table.clear(Dropdown.Options)
-						table.clear(Dropdown.Buttons)
+						end
+						tableclear(Dropdown.Options)
+						tableclear(Dropdown.Buttons)
 					end
 					Dropdown.Options = Options
 					AddOptions(Dropdown.Options)
@@ -2429,7 +2441,7 @@ function OrionLib:MakeWindow(WindowConfig)
 			end)
 
 		elseif TabConfig.OnUnlock and not TabConfig.PremiumOnly then
-			task.spawn(function()
+			spawn(function()
 				TabConfig.OnUnlock(ElementFunction)
 			end)
 		end
@@ -2476,7 +2488,7 @@ function OrionLib:MakeWindow(WindowConfig)
 						Content = "Are you sure you want to completely exit out of Orion?",
 						Time = 3
 					})
-					task.delay(3, function()
+					delay(3, function()
 						toggledDetach = false
 						detachBtn:Set("Detach")
 					end)
