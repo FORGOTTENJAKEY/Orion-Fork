@@ -2407,7 +2407,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				UnlockAllTabs()
 			end
 
-			AddConnection(KeyInput.FocusLost, function(enterPressed: boolean)
+			AddConnection(KeyInput.FocusLost, function(enterPressed)
 				if not enterPressed then return end
 
 				if WindowConfig.PremiumKey then
