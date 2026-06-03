@@ -556,9 +556,3 @@ end)
 ## License
 
 This is a forked and improved version of the original Orion Library. Please refer to the original repository for license information.
-
-## Support
-
-For issues, feature requests, or questions:
-- Visit the Discord server: [sirius.menu/discord](https://discord.gg/sirius)
-- Check the GitHub repository: [FORGOTTENJAKEY/Orion-Fork](https://github.com/FORGOTTENJAKEY/Orion-Fork)
