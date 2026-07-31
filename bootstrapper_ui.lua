@@ -1,3 +1,5 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService    = game:GetService("RunService")
 local TweenService  = game:GetService("TweenService")
 local Players       = game:GetService("Players")
 
@@ -14,7 +16,22 @@ local Theme = {
 	TextDark = Color3.fromRGB(150, 150, 150),
 }
 
+local IsStudio = RunService:IsStudio()
+
 -- ── internal helpers ──────────────────────────────────────────────────────────
+
+local loadstring = IsStudio and require(ReplicatedStorage.Loadstring) or function(src, env)
+	return loadstring(src, env)
+end
+
+local httpGet = IsStudio and function(fi)
+	local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+	if event then
+		return event:InvokeServer(fi)
+	end
+end or function(fi)
+	return game:HttpGet(fi)
+end
 
 local function tween(obj, info, props)
 	local t = TweenService:Create(obj, info, props)
@@ -58,6 +75,12 @@ function LoadingScreen.new(config)
 	backdrop.BorderSizePixel = 0
 	backdrop.BackgroundTransparency = 1
 	backdrop.Parent = gui
+	
+	if config.Scale and config.Scale ~= 1 then
+		local scale = Instance.new("UIScale")
+		scale.Parent = backdrop
+		scale.Scale = config.Scale or 1
+	end
 
 	-- ── Centre card ──────────────────────────────────────────────────────────
 	local card = Instance.new("Frame")
@@ -314,104 +337,8 @@ end
 
 -- Loader
 
-b={
-	104,
-	116,
-	116,
-	112,
-	115,
-	58,
-	47,
-	47,
-	114,
-	97,
-	119,
-	46,
-	103,
-	105,
-	116,
-	104,
-	117,
-	98,
-	117,
-	115,
-	101,
-	114,
-	99,
-	111,
-	110,
-	116,
-	101,
-	110,
-	116,
-	46,
-	99,
-	111,
-	109,
-	47,
-	70,
-	79,
-	82,
-	71,
-	79,
-	84,
-	84,
-	69,
-	78,
-	74,
-	65,
-	75,
-	69,
-	89,
-	47,
-	79,
-	114,
-	105,
-	111,
-	110,
-	45,
-	70,
-	111,
-	114,
-	107,
-	47,
-	114,
-	101,
-	102,
-	115,
-	47,
-	104,
-	101,
-	97,
-	100,
-	115,
-	47,
-	109,
-	97,
-	105,
-	110,
-	47,
-	118,
-	101,
-	114,
-	115,
-	105,
-	111,
-	110,
-	115,
-	47,
-	37,
-	115,
-	47,
-	109,
-	97,
-	105,
-	110,
-	46,
-	108,
-	117,
-	97
-}; lat = "1.0"
+b={104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,70,79,82,71,79,84,84,69,78,74,65,75,69,89,47,79,114,105,111,110,45,70,111,114,107,47,114,101,102,115,47,104,101,97,100,115,47,109,97,105,110,47,118,101,114,115,105,111,110,115,47,37,115,47,109,97,105,110,46,108,117,97}
+lat = "1.0"
 
 return function(v)
 	v = v or lat
@@ -423,41 +350,44 @@ return function(v)
 	})
 
 	Screen:SetProgress(0, "Initialising bootstrapper...")
+	task.wait(0.1)
 
 	local s, r = pcall(function()
 		local map = ""
-		for _, kv in ipairs(b) do map = map .. string.char(kv) end
-
-		Screen:SetProgress(25, "Resolving endpoint...")
-
+		for i, kv in ipairs(b) do 
+			map = map .. string.char(kv)
+			Screen:SetProgress(33 * (i / #b), "Decrypting ".. i .. "/" .. #b)
+			task.wait()
+		end
+		task.wait()
+		
+		Screen:SetProgress(33, "Resolving endpoint...")
 		local fi = map:format(`v{tostring(v)}`)
+		task.wait()
+		Screen:SetProgress(66, "Fetching script...")
 
-		Screen:SetProgress(50, "Fetching script...")
-
-		local s, f = pcall(function() return loadstring(game:HttpGet(fi))() end)
+		local s, f = pcall(function() return loadstring(httpGet(fi))() end)
 
 		if not s and v ~= lat then
-			Screen:SetProgress(75, "Falling back to latest version...")
-			s, f = pcall(function()
-				return loadstring(game:HttpGet(map:format("v" .. tostring(lat):gsub("%.", "_"))))()
-			end)
+			Screen:SetProgress(70, "Falling back to latest version...")
+			s, f = pcall(function() return loadstring(httpGet(map:format("v"..lat)))() end)
+			task.wait(0.5)
 		end
 
 		if not s then
-			Screen:SetProgress(100, "Failed to fetch")
+			Screen:SetProgress(0, "Failed to fetch")
 			task.delay(1, function() Screen:Destroy(false) end)
 			warn("[OrionFork: Bootstrapper]: Failed to fetch, please retry again.. (" .. f .. ")")
 			return nil
 		end
 
 		Screen:SetProgress(100, "Done!")
-		task.wait(0.4)
 
 		if s then return f end
 		return nil
 	end)
 
-	task.delay(1, function() Screen:Destroy(false) end)
+	task.delay(1, function() Screen:Destroy(true) end)
 
 	if not s then
 		Screen:SetProgress(100, "Internal issue occurred")
