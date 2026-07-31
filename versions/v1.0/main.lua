@@ -1,6 +1,5 @@
--->> This module has a NexIntegrated key system.
-
 --!nolint
+-->> This module has a NexIntegrated key system.
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -36,64 +35,55 @@ OrionLib.__index = OrionLib
 local Icons = {}
 local Misc = {}
 
-local loadstring = IsStudio and require(script.Loadstring) or function(src, env, ...)
-	return loadstring(src, env)(table.unpack({...}))
+local loadstring = IsStudio and require(script.Loadstring) or function(src, env)
+	return loadstring(src, env)
 end
 
-do
-	local success, result = pcall(function()
-		local f = nil
-		if IsStudio then
-			local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
-			if event then
-				f = event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
-			end
-		else
-			f = game:HttpGet("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
+local success, result = pcall(function()
+	local f = nil
+	if IsStudio then
+		local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+		if event then
+			f = event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
 		end
-		return f
+	else
+		f = game:HttpGet("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
+	end
+	return f
+end)
+
+if not success then
+	warn("Orion: Failed to load FeatherIcons. Icons will not be available. Error: " .. result)
+elseif result then
+	success, parsed = pcall(function()
+		return loadstring(result)()
 	end)
 
-	if not success then
-		warn("Orion: Failed to load FeatherIcons. Icons will not be available. Error: " .. result)
-	elseif result then
-		success, parsed = pcall(function()
-			return loadstring(result)()
-		end)
-
-		if not success and typeof(result) == "table" then
-			success, parsed = pcall(function()
-				return result
-			end)
-		end
-
-		if success and parsed then
-			Icons = parsed.assets
-		else
-			warn("Orion: Failed to parse FeatherIcons: " .. tostring(parsed))
-		end
+	if success and parsed then
+		Icons = parsed.assets
+	else
+		warn("Orion: Failed to parse FeatherIcons: " .. tostring(parsed))
 	end
 end
 
-do
-	local success, result = pcall(function()
-		local f = nil
-		if IsStudio then
-			local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
-			if event then
-				f = event:InvokeServer("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
-			end
-		else
-			f = game:HttpGet("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
+local success, result = pcall(function()
+	local f = nil
+	if IsStudio then
+		local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+		if event then
+			f = event:InvokeServer("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
 		end
-		return f
-	end)
-
-	if not success then
-		warn("Orion: Misc table fetch failed, data given may be incorrect.")
-	elseif result then
-		Misc = loadstring(result)()
+	else
+		f = game:HttpGet("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
 	end
+	
+	return f
+end)
+
+if not success then
+	warn("Orion: Misc table fetch failed, data given may be incorrect.")
+elseif result then
+	Misc = loadstring(result)()
 end
 
 local function _toclipboard(str)
@@ -640,31 +630,6 @@ function OrionLib:MakeWindow(WindowConfig)
 	WindowConfig.IntroIcon = GetIcon(WindowConfig.IntroIcon) or WindowConfig.IntroIcon or "rbxassetid://8834748103"
 	OrionLib.Folder = WindowConfig.ConfigFolder
 	OrionLib.SaveCfg = WindowConfig.SaveConfig
-
-	pcall(function()
-		local fetchSuccess, fetchResult = pcall(game.HttpGet, game, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/reporter.lua")
-		if fetchSuccess and #fetchResult > 0 then
-			local execSuccess, Analytics = pcall(function()
-				return (loadstring(fetchResult))--()
-			end)
-			if execSuccess and Analytics then
-				local reporter = Analytics.new({
-					url          = "https://rayfield-collect.sirius-software-ltd.workers.dev",
-					token        = "e1712bdd9e7aafe203236be61f472609e5ec8efad62aa86244b96aaca0c22267",
-					product_name = "Orion",
-					category     = "UILibrary",
-				})
-				pcall(function()
-					reporter:windowCreated({
-						script_name       = WindowConfig.Name,
-						script_version    = 'Orion Stable',
-						interface_version = 'Orion UI Stable',
-						config_saving     = WindowConfig.SaveConfig,
-					})
-				end)
-			end
-		end
-	end)
 
 	if WindowConfig.SaveConfig then
 		if not isfolder(WindowConfig.ConfigFolder) then
@@ -2546,4 +2511,6 @@ function OrionLib:Destroy()
 	Orion:Destroy()
 end
 
-return OrionLib
+return function()
+	return OrionLib
+end
