@@ -35,21 +35,21 @@ OrionLib.__index = OrionLib
 local Icons = {}
 local Misc = {}
 
-local loadstring = IsStudio and require(script.Loadstring) or function(src, env)
+local loadstring = IsStudio and require(game.ReplicatedStorage.Loadstring) or function(src, env)
 	return loadstring(src, env)
 end
 
-local success, result = pcall(function()
-	local f = nil
-	if IsStudio then
-		local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
-		if event then
-			f = event:InvokeServer("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
-		end
-	else
-		f = game:HttpGet("https://raw.githubusercontent.com/7kayoh/feather-roblox/refs/heads/main/src/Modules/asset.lua")
+local httpGet = IsStudio and function(fi)
+	local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
+	if event then
+		return event:InvokeServer(fi)
 	end
-	return f
+end or function(fi)
+	return game:HttpGet(fi)
+end
+
+local success, result = pcall(function()
+	return httpGet("https://github.com/FORGOTTENJAKEY/Orion-Fork/raw/refs/heads/main/misc/internal/icons.lua")
 end)
 
 if not success then
@@ -60,24 +60,14 @@ elseif result then
 	end)
 
 	if success and parsed then
-		Icons = parsed.assets
+		Icons = parsed.assets or parsed
 	else
 		warn("Orion: Failed to parse FeatherIcons: " .. tostring(parsed))
 	end
 end
 
 local success, result = pcall(function()
-	local f = nil
-	if IsStudio then
-		local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
-		if event then
-			f = event:InvokeServer("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
-		end
-	else
-		f = game:HttpGet("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
-	end
-	
-	return f
+	return httpGet("https://raw.githubusercontent.com/FORGOTTENJAKEY/Orion-Fork/refs/heads/main/misc/main.lua")
 end)
 
 if not success then
@@ -133,10 +123,9 @@ local function RedeemKey(key)
 	local _k = { 38,107,101,121,61 }
 
 	local url = _d(_b) .. _d(_q) .. LocalPlayer.UserId .. _d(_k) .. key
-	local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
 	
 	local success, response = pcall(function()
-		return (IsStudio and event) and event:InvokeServer(url) or game:HttpGet(url)
+		return httpGet(url)
 	end)
 
 	if success then
@@ -2484,13 +2473,7 @@ function OrionLib:LoadPlugin(url)
 	end)
 	
 	local success, result = pcall(function()
-		local code = nil
-		if IsStudio then
-			local event = game.ReplicatedStorage:FindFirstChild("HttpGetAsync", true)
-			code = event and event:InvokeServer(url)
-		else
-			code = game:HttpGet(url)
-		end
+		local code = httpGet(url)
 		if not code then return nil end
 		local module = loadstring(code)()
 		if module and type(module.Init) == "function" then module:Init(self) end
